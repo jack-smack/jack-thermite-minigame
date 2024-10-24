@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thermite Game</title>
+  <style>
+    .gameGrid {
+      display: grid;
+      grid-template-columns: repeat(6, 80px); 
+      grid-template-rows: repeat(3, 80px);
+      gap: 5px;
+    }
+    .targetGrid {
+      display: grid;
+      grid-template-columns: repeat(1, 80px); 
+      grid-template-rows: repeat(2, 80px);
+      gap: 5px;
+      -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none; /* Standard syntax */
+    }
+    .heatValueGrid {
+      display: grid;
+      grid-template-columns: repeat(6, 80px); 
+      grid-template-rows: repeat(1, 80px);
+      gap: 5px;
+      -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none; /* Standard syntax */
+    }
+    .tile {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .targetTile {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+    <div style="display: flex; align-items: center; justify-content: center; margin-top: 20vh; flex-direction: column;">
+        <div class="heatValueGrid" id="heatValueGrid"></div>
+        <div style="display: flex; align-items: center; justify-content: center; flex-direction: row;">
+            <div class="targetGrid" id="targetGrid"></div>
+            <div class="gameGrid" id="gameGrid"></div>
+            <div id="lightFireButton" style="width: 120px; height: 120px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <img style="width: 100%; height: 100%;" src="assets/FireIcon.png" />
+                <div style="font-size: xx-large;">10</div>
+            </div>
+        </div>
+    </div>
+   
+
+
+  <script>
+    const gameGridData = [
+        [1,1,0,0,1,1],
+        [1,1,1,0,0,1],
+        [1,0,1,1,0,0],
+    ];
+    const targetHeat = [Math.floor(Math.random()*(6561-6) + 6), Math.floor(Math.random()*(6561-6) + 6), Math.floor(Math.random()*(6561-6) + 6)];
+    const gameGrid = document.getElementById('gameGrid');
+    const startFireValue = Math.random()*(25-1)+1;
+
+    const targetGrid = document.getElementById('targetGrid');
+    const heatValueGrid = document.getElementById('heatValueGrid');
+
+    for(let i=0; i<3; i++){
+        const tile = document.createElement('div');
+        tile.classList.add('targetTile');
+        tile.textContent = targetHeat[i];
+        targetGrid.appendChild(tile);
+    }
+    let fireLit = false;
+    let draggedTile = null;
+    let draggedPosition = null;
+    function renderGrid(){
+        gameGrid.innerHTML = '';
+
+        for(let i = 0; i<3; i++){
+            for(let j=0; j<6;j++){
+                const tile = createTile(i, j);
+                gameGrid.appendChild(tile);
+            }
+        }
+    }
+    renderGrid();
+    function createTile(row, col){
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+
+        const img = document.createElement('img');
+        let type = gameGridData[row][col];
+        if(type){
+            img.src='assets/AlIcon.png';
+        }
+        else{
+            img.src='assets/FeOICON.png'
+        }
+        tile.dataset.row=row;
+        tile.dataset.col=col;
+        tile.appendChild(img);
+
+        tile.addEventListener('dragstart', handleDragStart);
+        tile.addEventListener('dragover', handleDragOver);
+        tile.addEventListener('drop', handleDrop);
+
+        return tile;
+    }
+    function handleDragStart(event) {
+        if(!fireLit){
+            draggedTile = event.target.parentElement;
+            draggedPosition={row: parseInt(draggedTile.dataset.row), col: parseInt(draggedTile.dataset.col)};
+        }
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault(); 
+    }
+
+    function handleDrop(event) {
+        if(!fireLit){
+            event.preventDefault();
+            const targetTile = event.target.closest('.tile');
+            if(!targetTile){ return; }
+
+            const targetPosition = {
+                row:parseInt(targetTile.dataset.row),
+                col:parseInt(targetTile.dataset.col)
+            };
+            if(isNeighbour(draggedPosition, targetPosition)){
+                let temp = gameGridData[draggedPosition.row][draggedPosition.col];
+                gameGridData[draggedPosition.row][draggedPosition.col] = gameGridData[targetPosition.row][targetPosition.col];
+                gameGridData[targetPosition.row][targetPosition.col] = temp;
+                renderGrid();
+            }
+        }
+    }
+    function isNeighbour(pos1, pos2){
+        const rowDiff = Math.abs(pos1.row - pos2.row);
+        const colDiff = Math.abs(pos1.col - pos2.col);
+        return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+    }
+    document.getElementById("lightFireButton").addEventListener("click", LightFire);
+    function LightFire(){
+        fireLit=true;
+        console.log("light ", startFireValue);
+        for(let i = 0; i<3; i++){
+            for(let j=0; j<6;j++){
+                setTimeout(function(){
+                    let prevValue = startFireValue;
+                    if(j<5){
+                        prevValue=gameGridData[i][j+1];
+                    }
+                    console.log("prev(", i, ", ", j,"): ", prevValue);
+                    if(!gameGridData[i][j]){
+                        gameGridData[i][j] = Math.floor(prevValue*2);
+                    }else{
+                        gameGridData[i][j] = Math.floor(prevValue+1);
+                    }
+                    const tile = document.createElement('div');
+                    tile.classList.add('targetTile');
+                    tile.textContent = gameGridData[i][j];
+                    heatValueGrid.appendChild(tile);
+                }, 1000)
+            }
+        }
+    }
+
+  </script>
+</body>
+</html>
