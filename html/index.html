@@ -6,64 +6,56 @@
   <title>Thermite Game</title>
   <style>
     .gameGrid {
-      display: grid;
-      grid-template-columns: repeat(2, 80px); 
-      grid-template-rows: repeat(3, 80px);
-      gap: 5px;
-      margin-left:0.2vw;
-      margin-right:0.2vw;
-    }
-    .targetGrid {
-      display: grid;
-      grid-template-columns: repeat(1, 80px); 
-      grid-template-rows: repeat(2, 80px);
-      gap: 5px;
-      -webkit-user-select: none; /* Safari */
-        -ms-user-select: none; /* IE 10 and IE 11 */
-        user-select: none; /* Standard syntax */
-    }
-    .heatValueGrid {
-      display: grid;
-      grid-template-columns: repeat(1, 80px); 
-      grid-template-rows: repeat(3, 80px);
-      gap: 5px;
-      -webkit-user-select: none; /* Safari */
-        -ms-user-select: none; /* IE 10 and IE 11 */
-        user-select: none; /* Standard syntax */
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(7, 80px); 
+        grid-template-rows: repeat(5, 80px);
+        gap: 5px;
+        margin-left:0.2vw;
+        margin-right:0.2vw;
     }
     .tile {
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
+        transition: transform 2.0s ease-in;
+        position: relative;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+    }
+    .falling {
+        transform: translateY(85px); /* Slightly larger than the gap + tile size */
     }
     .targetTile {
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
     }
+    .fire {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background-image: url('assets/FireIcon.png'); /* Replace with your fire sprite image */
+        background-size: cover;
+        animation: fadeOut 1.4s forwards;
+        pointer-events: none; /* Prevent interactions */
+    }
+    @keyframes fadeOut {
+    0% { opacity: .7; }
+    40% { opacity: .7; }
+    100% { opacity: 0; }
+  }
   </style>
 </head>
 <body>
     <div style="display: flex; align-items: center; justify-content: center; margin-top: 20vh; flex-direction: column;">
         <div style="display: flex; align-items: center; justify-content: center; flex-direction: row;">
-            <div class="targetGrid" id="targetGrid"></div>
-            <div class="heatValueGrid" id="heatValueGrid3"></div>
-            <div class="gameGrid" id="gameGrid3"></div>
-            <div class="heatValueGrid" id="heatValueGrid2"></div>
-            <div class="gameGrid" id="gameGrid2"></div>
-            <div class="heatValueGrid" id="heatValueGrid1"></div>
-            <div class="gameGrid" id="gameGrid1"></div>
-            <div id="lightFireButton" style="width: 120px; height: 120px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <img style="width: 100%; height: 100%;" src="assets/FireIcon.png" />
-                <div id="startFireValueText" style="font-size: xx-large;">10</div>
-            </div>
+            <div class="gameGrid" id="gameGrid"></div>
         </div>
     </div>
    
@@ -71,60 +63,195 @@
 
   <script>
     const gameGridData = [
-        [1,1,0,0,1,1],
-        [1,1,1,0,0,1],
-        [1,0,1,1,0,0],
+        [1,1,0,0,1,1,1],
+        [1,1,1,0,0,1,0],
+        [1,0,1,1,0,0,0],
+        [1,1,1,0,0,1,0],
+        [1,0,1,1,0,0,0],
     ];
-    const targetHeat = [Math.floor(Math.random()*(6561-6) + 6), Math.floor(Math.random()*(6561-6) + 6), Math.floor(Math.random()*(6561-6) + 6)];
-    const gameGrid1 = document.getElementById('gameGrid1');
-    const gameGrid2 = document.getElementById('gameGrid2');
-    const gameGrid3 = document.getElementById('gameGrid3');
-
-    const startFireValue = Math.floor(Math.random()*(25-1)+1);
-    document.getElementById("startFireValueText").textContent=startFireValue;
-
-    const targetGrid = document.getElementById('targetGrid');
-    const heatValueGrid1 = document.getElementById('heatValueGrid1');
-    const heatValueGrid2 = document.getElementById('heatValueGrid2');
-    const heatValueGrid3 = document.getElementById('heatValueGrid3');
-
-    for(let i=0; i<3; i++){
-        const tile = document.createElement('div');
-        tile.classList.add('targetTile');
-        tile.textContent = targetHeat[i];
-        targetGrid.appendChild(tile);
-    }
-    let fireLit = false;
-    let draggedTile = null;
-    let draggedPosition = null;
-    function renderGrid(){
-        gameGrid3.innerHTML = '';
-        gameGrid2.innerHTML = '';
-        gameGrid1.innerHTML = '';
-
-        for(let i = 0; i<3; i++){
-            for(let j=0; j<6;j++){
-                const tile = createTile(i, j);
-                //tile.textContent= `(${i}, ${j})`;
-                if(j<2){gameGrid3.appendChild(tile);}
-                else if(j<4){gameGrid2.appendChild(tile);}
-                else{gameGrid1.appendChild(tile);}
+    generateRandomGrid();
+    function generateRandomGrid(){
+        for(let i = 0; i<5; i++){
+            for(let j=0; j<7;j++){
+                gameGridData[i][j] = (Math.random()>0.5) + 1 //1 is Al 2 is FeO2. 0 is EMPTY
             }
         }
     }
-    renderGrid();
+    const gameGrid = document.getElementById('gameGrid');
+
+    let gameActive = true;
+    let draggedTile = null;
+    let draggedPosition = null;
+    function renderGrid(){
+        gameGrid.innerHTML = '';
+
+        for(let i = 0; i<5; i++){
+            for(let j=0; j<7;j++){
+                const tile = createTile(i, j);
+                gameGrid.appendChild(tile);
+            }
+        }
+    }
+    function AnyTilesFalling(){
+        return Array.from(gameGrid.children).some(tile=>tile.classList.contains('falling'));
+    }
+    window.requestAnimationFrame(gameLoop);
+    function gameLoop(){
+        //tiles still falling do not execute any logic (until animations are done)
+        if(AnyTilesFalling()){
+            window.requestAnimationFrame(gameLoop);
+            return;
+        }
+
+        renderGrid(); //animations done render new positions
+
+        //evaluate any match 3s
+        for(let i = 0; i<5; i++){
+            for(let j=0; j<7;j++){
+                let val = gameGridData[i][j];
+                let rightAdj = null;
+                let leftAdj = null;
+                if(j<6){ rightAdj = gameGridData[i][j+1];}
+                if(j>0){ leftAdj = gameGridData[i][j-1];}
+                if(val!=0 &&(val==rightAdj && val==leftAdj)){
+                   processMatch(
+                    {row:i, col:j},
+                    {row:i, col:j+1},
+                    {row:i, col:j-1}
+                   )
+                }
+            }
+        }
+        //process falling tiles
+        setInterval(function(){
+            processFallingTiles();
+        }, 700)
+
+        window.requestAnimationFrame(gameLoop);
+    }
+    function processMatch(pos1, pos2, pos3){
+        //drop tiles down
+        //what replaces pos1?
+        gameGridData[pos1.row][pos1.col] = 0;
+        gameGridData[pos2.row][pos2.col] = 0;
+        gameGridData[pos3.row][pos3.col] = 0; //this tile is removed (empty space)
+        createFireSprite(pos1.row, pos1.col);
+        createFireSprite(pos2.row, pos2.col);
+        createFireSprite(pos3.row, pos3.col);
+    }
+    function processFallingTiles(){
+        for(let i = 4; i>=0; i--){
+            for(let j=6; j>=0;j--){
+                if (gameGridData[i][j]==0){
+                  
+                    //Process the fall data wise then move corresponding tiles into new location
+                    ProcessDropDown(j);
+                }
+            }
+        }
+    }
+    function DropTile(startPos, endPos){
+        tilesDropping=true;
+        const tile = gameGrid.children[(startPos.row)*7+startPos.col]; //above
+        tile.classList.add('falling');
+        tile.style.opacity = 0.5;
+        tile.style.position
+        tile.style.transform = "translateY("+((endPos.row-startPos.row)*85) + "px);"
+        tile.addEventListener('transitionend', () => {
+            tile.classList.remove('falling');
+            //once it arrives we can process all new matches
+        }, { once: true });
+    }
+    function DropTileIntoBoard(endPos, numberEmptyTiles){
+        tilesDropping=true;
+        const tile = gameGrid.children[(endPos.row)*7+endPos.col]; //above
+        tile.style.position='absolute';
+        const { left, top } = tile.getBoundingClientRect();
+        const gridRect = gameGrid.getBoundingClientRect();
+        tile.style.position = `${top - gridRect.top - (numberEmptyTiles*85)}px`;
+
+        tile.offsetHeight;
+
+        //tile.classList.add('falling');
+
+        tile.style.transform = `translateY(${top-gridRect.top})`;
+        tile.addEventListener('transitionend', () => {
+            //tile.classList.remove('falling');
+            tile.style.position='';
+            tile.style.top = '';
+            tile.style.transform = '';
+            //once it arrives we can process all new matches
+        }, { once: true });
+    }
+    function ProcessDropDown(col){
+        let numberEmptyTiles = 0;
+        for(let i=4; i>=0; i--){
+            if(gameGridData[i][col]==0){
+                numberEmptyTiles+=1;
+            }
+        }
+        //all tiles move down to fill empty positions
+        for(let i=4; i>=0; i--){
+            if (gameGridData[i][col]!=0){
+                //found tile, is there empty space below it?
+                for(let j=4; j>=i; j--){
+                    if(gameGridData[j][col]==0){
+                        //move tile to this position
+                        DropTile({row:i, col:col}, {row:j, col:col})
+                        gameGridData[j][col] = gameGridData[i][col];
+                        gameGridData[i][col]=0;
+                    }
+                }
+            }
+        }
+        //Now the column should have numberEmptyTiles of empty space at top of column. Fill from dropping in out of frame
+        for(let i=numberEmptyTiles; i>=0;i--){
+            gameGridData[i][col] = (Math.random()>0.5) + 1 //generate random
+            createTile(i, col); //creates in this position
+            DropTileIntoBoard({row:i, col:col}, numberEmptyTiles) //row + numberEmptyTiles = offset above grid
+        }
+
+        //at the end of this, the game data should be ready and animations should be playing. Once they all finish: re-render then check for matches again
+    }
+
+    function createFireSprite(row, col) {
+        const fire = document.createElement('div');
+        fire.classList.add('fire');
+
+        // Position the fire sprite relative to the tile's location
+        const tile = gameGrid.children[row*7+col];
+        const { left, top } = tile.getBoundingClientRect();
+        tile.style.opacity=0.3;
+
+        // Adjust for container's position
+        const gridRect = gameGrid.getBoundingClientRect();
+        fire.style.left = `${left - gridRect.left}px`;
+        fire.style.top = `${top - gridRect.top}px`;
+
+        // Append fire to the game grid
+        gameGrid.appendChild(fire);
+
+        // Remove fire after 1 second
+        setTimeout(() => fire.remove(), 1600);
+    }
     function createTile(row, col){
+        let type = gameGridData[row][col];
         const tile = document.createElement('div');
         tile.classList.add('tile');
 
+        
         const img = document.createElement('img');
-        let type = gameGridData[row][col];
-        if(type){
+        if(type==1){
             img.src='assets/AlIcon.png';
         }
-        else{
+        else if(type==2){
             img.src='assets/FeOICON.png'
         }
+        else{
+            img.src="assets/Dust.png"
+        }
+        
+        //tile.textContent=`(${row},${col})=${type}`
         tile.dataset.row=row;
         tile.dataset.col=col;
         tile.appendChild(img);
@@ -136,10 +263,8 @@
         return tile;
     }
     function handleDragStart(event) {
-        if(!fireLit){
-            draggedTile = event.target.parentElement;
-            draggedPosition={row: parseInt(draggedTile.dataset.row), col: parseInt(draggedTile.dataset.col)};
-        }
+        draggedTile = event.target.parentElement;
+        draggedPosition={row: parseInt(draggedTile.dataset.row), col: parseInt(draggedTile.dataset.col)};
     }
 
     function handleDragOver(event) {
@@ -147,8 +272,7 @@
     }
 
     function handleDrop(event) {
-        if(!fireLit){
-            event.preventDefault();
+        event.preventDefault();
             const targetTile = event.target.closest('.tile');
             if(!targetTile){ return; }
 
@@ -160,64 +284,12 @@
                 let temp = gameGridData[draggedPosition.row][draggedPosition.col];
                 gameGridData[draggedPosition.row][draggedPosition.col] = gameGridData[targetPosition.row][targetPosition.col];
                 gameGridData[targetPosition.row][targetPosition.col] = temp;
-                renderGrid();
             }
         }
-    }
     function isNeighbour(pos1, pos2){
         const rowDiff = Math.abs(pos1.row - pos2.row);
         const colDiff = Math.abs(pos1.col - pos2.col);
         return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
-    }
-    document.getElementById("lightFireButton").addEventListener("click", LightFire);
-    var i = 0;
-    var j = 5;
-    function FireLoop(){
-        if(j<0){return;}
-        setTimeout(function(){
-            let prevValue = startFireValue;
-            if(j<5){
-                prevValue=gameGridData[i][j+1];
-            }
-
-            if(!gameGridData[i][j]){
-                console.log(`multiply ${i},${j}`);
-                gameGridData[i][j] = Math.floor(prevValue*2);
-            }else{
-                console.log(`add ${i},${j} = ${Math.floor(prevValue+1)}`);
-                gameGridData[i][j] = Math.floor(prevValue+1);
-            }
-
-            const tile = document.createElement('div');
-            tile.classList.add('targetTile');
-            tile.textContent = gameGridData[i][j];
-            if(j==4){
-                heatValueGrid1.appendChild(tile);
-            }
-            if(j==2){
-                heatValueGrid2.appendChild(tile);
-            }
-            if(j==0){
-                console.log(`prev ${i},${j}: ${prevValue}`);
-                heatValueGrid3.appendChild(tile);
-            }
-            
-           
-            
-            i++;
-            if(j>0){
-                FireLoop();
-            }
-            if(i>2){
-                j--;
-                i=0;
-                FireLoop();
-            }
-        },400)
-    }
-    function LightFire(){
-        fireLit=true;
-        FireLoop();
     }
 
   </script>
