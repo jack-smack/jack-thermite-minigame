@@ -15,7 +15,7 @@
         margin-right:0.2vw;
     }
     .tile {
-        transition: transform 2.0s ease-in;
+        transition: transform 4.0s ease-in;
         position: relative;
         width: 80px;
         height: 80px;
@@ -63,13 +63,13 @@
 
   <script>
     const gameGridData = [
-        [1,1,0,0,1,1,1],
-        [1,1,1,0,0,1,0],
-        [1,0,1,1,0,0,0],
-        [1,1,1,0,0,1,0],
-        [1,0,1,1,0,0,0],
+        [1,2,1,2,1,2,1],//0
+        [1,2,1,2,1,2,1],//1
+        [1,2,1,2,1,2,1],//2
+        [1,2,1,2,1,2,1],//3
+        [1,2,1,1,2,2,2],//4
     ];
-    generateRandomGrid();
+    //generateRandomGrid();
     function generateRandomGrid(){
         for(let i = 0; i<5; i++){
             for(let j=0; j<7;j++){
@@ -204,11 +204,13 @@
                 }
             }
         }
+        console.log(`${numberEmptyTiles} empty tiles in ${col}`);
         //Now the column should have numberEmptyTiles of empty space at top of column. Fill from dropping in out of frame
-        for(let i=numberEmptyTiles; i>=0;i--){
+        for(let i=numberEmptyTiles-1; i>=0;i--){
+            console.log("row: ", i);
             gameGridData[i][col] = (Math.random()>0.5) + 1 //generate random
-            createTile(i, col); //creates in this position
-            DropTileIntoBoard({row:i, col:col}, numberEmptyTiles) //row + numberEmptyTiles = offset above grid
+            //createTile(i, col); //creates in this position
+            //DropTileIntoBoard({row:i, col:col}, numberEmptyTiles) //row + numberEmptyTiles = offset above grid
         }
 
         //at the end of this, the game data should be ready and animations should be playing. Once they all finish: re-render then check for matches again
@@ -221,7 +223,7 @@
         // Position the fire sprite relative to the tile's location
         const tile = gameGrid.children[row*7+col];
         const { left, top } = tile.getBoundingClientRect();
-        tile.style.opacity=0.3;
+        tile.style.opacity=0.5;
 
         // Adjust for container's position
         const gridRect = gameGrid.getBoundingClientRect();
@@ -251,10 +253,10 @@
             img.src="assets/Dust.png"
         }
         
-        //tile.textContent=`(${row},${col})=${type}`
+        tile.textContent=`(${row},${col})=${type}`
         tile.dataset.row=row;
         tile.dataset.col=col;
-        tile.appendChild(img);
+        //tile.appendChild(img);
 
         tile.addEventListener('dragstart', handleDragStart);
         tile.addEventListener('dragover', handleDragOver);
