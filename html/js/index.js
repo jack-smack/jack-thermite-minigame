@@ -202,8 +202,9 @@ function processMatch(positions){
     //what replaces pos1?
     positions.forEach((pos)=>{
         score+=10*matchCombo;
-        scoreText.textContent=`Score: ${score} Combo: ${matchCombo}`;
+        scoreText.textContent=`Score: ${score} Last combo: ${matchCombo}`;
         gameGridData[pos.row][pos.col] = 0;
+        PopupScoreAdd(pos.row, pos.col, 10*matchCombo);
         createFireSprite(pos.row, pos.col);
     });
     matchCombo+=1;
@@ -266,8 +267,30 @@ function ProcessDropDown(col){
     //at the end of this, the game data should be ready and animations should be playing. Once they all finish: re-render then check for matches again
 }
 
+function PopupScoreAdd(row, col, score){
+    const fire = document.createElement('div');
+    fire.classList.add('fire');
+    fire.style.color="white";
+    fire.style.fontSize="18px";
+    fire.textContent = score;
+    fire.style.zIndex=3;
+    
+
+    // Position the fire sprite relative to the tile's location
+    const tile = gameGrid.children[row*7+col];
+    const { left, top } = tile.getBoundingClientRect();
+
+    // Adjust for container's position
+    const gridRect = gameGrid.getBoundingClientRect();
+    fire.style.left = `${left - gridRect.left+ 40}px`;
+    fire.style.top = `${top - gridRect.top+40}px`;
+    // Append fire to the game grid
+    fireLayer.appendChild(fire);
+
+    // Remove fire after 1 second
+    setTimeout(() => fire.remove(), 600);
+}
 function createFireSprite(row, col) {
-    console.log("fire");
     const fire = document.createElement('div');
     fire.classList.add('fire');
     const img = document.createElement("img");
@@ -275,6 +298,7 @@ function createFireSprite(row, col) {
     img.draggable=false;
     img.style.width='100%';
     img.style.height='100%';
+    img.style.animation = 'flicker 0.6s infinite alternate';
     fire.appendChild(img);
 
     // Position the fire sprite relative to the tile's location
@@ -397,10 +421,11 @@ document.body.onkeyup = function(e) {
 }
 gameGrid.addEventListener('mousedown', (event)=>{
     const nearestStartTile = findNearestTile(event.clientX, event.clientY);
-        if(nearestStartTile){
-            swapping=true;
-            dragStartPos = {x:event.clientX, y:event.clientY};
-            startTile = nearestStartTile;
-            document.addEventListener('mouseup', onDrop);
-        }
+    if(AnyTilesFalling()){return;}
+    if(nearestStartTile){
+        swapping=true;
+        dragStartPos = {x:event.clientX, y:event.clientY};
+        startTile = nearestStartTile;
+        document.addEventListener('mouseup', onDrop);
+    }
 });
