@@ -1,3 +1,18 @@
+const gameGrid = document.getElementById('gameGrid');
+
+const fireLayer = document.getElementById('fireLayer');
+window.onresize = setupFireLayer;
+setupFireLayer();
+function setupFireLayer(){
+    fireLayer.style.left = `${gameGrid.getBoundingClientRect().left}px`;
+    fireLayer.style.top = `${gameGrid.getBoundingClientRect().top}px`;
+}
+
+
+const scoreText = document.getElementById("score");
+
+const timerLine = document.getElementById("timer-line");
+
 const gameGridData = [
     [1,2,1,2,1,2,1],//0
     [1,2,1,2,1,2,1],//1
@@ -5,6 +20,22 @@ const gameGridData = [
     [1,2,1,2,1,2,1],//3
     [1,2,1,1,2,2,2],//4
 ];
+
+let gameStarted = true;
+
+let DEBUGShowNumbers = false;
+
+//Swapping
+let draggedTile = null;
+let draggedPosition = null;
+let swapping=false;
+
+//Score and time
+let timeLeft = 60;
+let score = 0;
+let matchCombo = 1;
+
+
 generateRandomGrid();
 function generateRandomGrid(){
     for(let i = 0; i<5; i++){
@@ -18,25 +49,10 @@ function generateRandomGrid(){
 //3 Cu
 //4 Mg
 //5 Ti
-let gameStarted = false;
-const gameGrid = document.getElementById('gameGrid');
-const fireLayer = document.getElementById('fireLayer');
-fireLayer.style.left = `${gameGrid.getBoundingClientRect().left}px`;
-fireLayer.style.top = `${gameGrid.getBoundingClientRect().top}px`;
-const scoreText = document.getElementById("score");
-let DEBUGShowNumbers = false;
-let gameActive = true;
-let draggedTile = null;
-let draggedPosition = null;
-let swapping=false;
-let timeLeft = 60;
-let score = 0;
-let matchCombo = 1;
+
 setInterval(timer, 1000);
-const timerLine = document.getElementById("timer-line");
 function timer(){
     if(!gameStarted){return;}
-    console.log(timeLeft);
     timeLeft-=1;
     let progress = timeLeft/60;
     timerLine.style.width=`${progress*100}%`;
@@ -103,7 +119,7 @@ function gameLoop(){
         return;
     }
     //show grid after rendering then evaluate matches
-    let timeOut = AnyMatches()?500:0;
+    let timeOut = AnyMatches()?250:0;
     setTimeout(()=>{
         //evaluate any match 3s
         for(let i = 0; i<5; i++){
@@ -124,6 +140,7 @@ function gameLoop(){
                             {row:i, col:j+1},
                             {row:i, col:j-1}
                         ];
+                        //from each tile explore in all directions to find same tile
                         if(j+2<=6){
                             if(gameGridData[i][j+2]==val){
                                 matchPos.push({row:i, col:j+2});
@@ -384,43 +401,47 @@ function isNeighbour(pos1, pos2){
     const colDiff = Math.abs(pos1.col - pos2.col);
     return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
 }
-function onDrop(event){
-    document.removeEventListener('mouseup', onDrop);
-
-    const endTile = findNearestTile(event.clientX, event.clientY);
-    if (endTile && endTile !== startTile) {
-        let targetPosition = {
-            row:parseInt(endTile.dataset.row),
-            col:parseInt(endTile.dataset.col)
-        };
-        let startPosition = {
-            row:parseInt(startTile.dataset.row),
-            col:parseInt(startTile.dataset.col)
-        };
-        if(isNeighbour(startPosition, targetPosition)){
+let TryingSwap = false;
+function TrySwap(startPosition, endPosition){
+    if(!TryingSwap){
+        TryingSwap=true;
+        if(isNeighbour(startPosition, endPosition)){
             let temp = gameGridData[startPosition.row][startPosition.col];
-            gameGridData[startPosition.row][startPosition.col] = gameGridData[targetPosition.row][targetPosition.col];
-            gameGridData[targetPosition.row][targetPosition.col] = temp;
+            gameGridData[startPosition.row][startPosition.col] = gameGridData[endPosition.row][endPosition.col];
+            gameGridData[endPosition.row][endPosition.col] = temp;
             if(!AnyMatches()){
                 setTimeout(() => {
                     //Reset the swap
-                    let temp = gameGridData[targetPosition.row][targetPosition.col];
-                    gameGridData[targetPosition.row][targetPosition.col] = gameGridData[startPosition.row][startPosition.col];
+                    let temp = gameGridData[endPosition.row][endPosition.col];
+                    gameGridData[endPosition.row][endPosition.col] = gameGridData[startPosition.row][startPosition.col];
                     gameGridData[startPosition.row][startPosition.col] = temp;
-                    swapping=false;
+                    setTimeout(()=>{
+                        swapping=false;
+                        startTile=null;
+                        startPosition=null;
+                        TryingSwap=false;
+                    }, 500);
+    
                 }, 300);
             }else{
-                swapping=false;
+                setTimeout(()=>{
+                    swapping=false;
+                    startTile=null;
+                    startPosition=null;
+                    TryingSwap=false;
+                }, 500);
             }
         }else{
-            swapping=false;
+            setTimeout(()=>{
+                swapping=false;
+                startTile=null;
+                startPosition=null;
+                TryingSwap=false;
+            }, 500);
         }
-        
-    } else{
-
     }
-    startTile = null;
 }
+
 document.body.onkeyup = function(e) {
     if (e.key == " " ||
         e.code == "Space" ||      
@@ -435,17 +456,63 @@ document.body.onkeyup = function(e) {
         $.post(`https://${GetParentResourceName()}/finishgame`, JSON.stringify({'score': score}));
     }
 }
+gameGrid.addEventListener('mousemove', (event)=>{
+    //if mouse is held down find the delta between positions. If past a certain point do swap to that loc
+    if(swapping && startTile!=null){
+        let currentPos = {x:event.clientX, y:event.clientY};
+        let dragVec = {x:currentPos.x-dragStartPos.x, y:currentPos.y-dragStartPos.y};
+        let dragMagSquared = dragVec.x*dragVec.x + dragVec.y*dragVec.y;
+        if(dragMagSquared>=600){
+            //try swap in this dir
+            //look at angle with x axis
+            let angle = Math.acos(dragVec.x/(Math.sqrt(dragMagSquared)));
+            angle = angle*180/Math.PI
+            console.log(angle);
+            let startPosition = {
+                row:parseInt(startTile.dataset.row),
+                col:parseInt(startTile.dataset.col)
+            };
+            let endPosition = {
+                row:0,
+                col:0
+            }
+            if(angle<=45){
+                //right
+                endPosition = {row:startPosition.row, col:startPosition.col+1};
+            }
+            else if(angle>=135){
+                //left
+                endPosition = {row:startPosition.row, col:startPosition.col-1};
+            }  
+            else{
+                //up or down
+                if(dragVec.y>0){
+                    //down
+                    endPosition = {row:startPosition.row+1, col:startPosition.col};
+                }
+                else{
+                    //up
+                    endPosition = {row:startPosition.row-1, col:startPosition.col};
+                }
+            }
+            TrySwap(startPosition, endPosition);
+        }
+    }
+
+
+});
 gameGrid.addEventListener('mousedown', (event)=>{
+    console.log("mouse dwn");
     const nearestStartTile = findNearestTile(event.clientX, event.clientY);
     if(AnyTilesFalling()){return;}
     if(nearestStartTile){
+        //console.log("swapping active");
         swapping=true;
         dragStartPos = {x:event.clientX, y:event.clientY};
         startTile = nearestStartTile;
-        document.addEventListener('mouseup', onDrop);
+        //document.addEventListener('mouseup', onDrop);
     }
 });
-
 window.addEventListener('message', (event) => {
     if (event.data.type === 'startgame') {
         document.getElementById('frame').style.display='flex';
