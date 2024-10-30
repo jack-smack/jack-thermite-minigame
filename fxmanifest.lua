@@ -11,13 +11,10 @@ version '0.0.1'
 lua54 'yes'
 
 client_scripts {
-
-}
-server_scripts {
-
+	'client.lua'
 }
 shared_script {
-
+	'config.lua'
 }
 
 
@@ -27,12 +24,6 @@ files {
 	'html/index.html',
 	'html/styles/*.css',
 	'html/js/*.js',
-	'html/assets/*.png',
-	'html/assets/*.jpg',
-	'html/assets/shop/*.png',
-	'html/assets/shop/*.jpg',
-	'html/assets/*.svg',
-	'html/assets/audio/*.mp3',
-	'html/assets/audio/*.wav',
+	'html/assets/*.*',
 }
 

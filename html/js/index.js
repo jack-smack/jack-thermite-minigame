@@ -18,6 +18,7 @@ function generateRandomGrid(){
 //3 Cu
 //4 Mg
 //5 Ti
+let gameStarted = false;
 const gameGrid = document.getElementById('gameGrid');
 const fireLayer = document.getElementById('fireLayer');
 fireLayer.style.left = `${gameGrid.getBoundingClientRect().left}px`;
@@ -34,10 +35,18 @@ let matchCombo = 1;
 setInterval(timer, 1000);
 const timerLine = document.getElementById("timer-line");
 function timer(){
+    if(!gameStarted){return;}
+    console.log(timeLeft);
     timeLeft-=1;
     let progress = timeLeft/60;
     timerLine.style.width=`${progress*100}%`;
     if(timeLeft<=0){
+        setTimeout(()=>{
+            gameStarted=false;
+            timeLeft=60;
+            document.getElementById('frame').style.display='none';
+            $.post(`https://${GetParentResourceName()}/finishgame`, JSON.stringify({'score': score}));
+        },1500)
         //times up
     }
 }
@@ -78,6 +87,7 @@ function AnyMatches(){
 }
 window.requestAnimationFrame(gameLoop);
 function gameLoop(){
+    if(!gameStarted){ window.requestAnimationFrame(gameLoop); return;}
     //tiles still falling do not execute any logic (until animations are done)
     if(AnyTilesFalling()){
         window.requestAnimationFrame(gameLoop);
@@ -418,6 +428,12 @@ document.body.onkeyup = function(e) {
     ) {
         DEBUGShowNumbers=!DEBUGShowNumbers;
     }
+    if(e.key=="Escape"){
+        gameStarted=false;
+        timeLeft=60;
+        document.getElementById('frame').style.display='none';
+        $.post(`https://${GetParentResourceName()}/finishgame`, JSON.stringify({'score': score}));
+    }
 }
 gameGrid.addEventListener('mousedown', (event)=>{
     const nearestStartTile = findNearestTile(event.clientX, event.clientY);
@@ -427,5 +443,18 @@ gameGrid.addEventListener('mousedown', (event)=>{
         dragStartPos = {x:event.clientX, y:event.clientY};
         startTile = nearestStartTile;
         document.addEventListener('mouseup', onDrop);
+    }
+});
+
+window.addEventListener('message', (event) => {
+    if (event.data.type === 'startgame') {
+        document.getElementById('frame').style.display='flex';
+        timeLeft = 60;
+        if(event.data.data){
+            if(event.data.data.time){
+                timeLeft=event.data.data.time;
+            }
+        }
+        gameStarted=true;
     }
 });
