@@ -20,3 +20,5 @@ https://jack-scripts.tebex.io/
 A tutorial showcasing the entire development will be coming to my youtube channel:
 https://www.youtube.com/@jack7342-x5m
 
+https://media.discordapp.net/attachments/1192889106187948174/1301415048828424203/thermitegame_online-video-cutter.com.mp4?ex=672464b6&is=67231336&hm=ca057047f916bd7024cd54802a4aa2dcd460da52ce997868d2df1da65fa73f58&
+
