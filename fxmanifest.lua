@@ -6,17 +6,15 @@ author 'JACK'
 
 description 'Thermite minigame match3 style'
 
-version '0.0.1'
+version '1.0.0'
 
 lua54 'yes'
+
+License 'GPL4.0'
 
 client_scripts {
 	'client.lua'
 }
-shared_script {
-	'config.lua'
-}
-
 
 ui_page 'html/index.html'
 
@@ -25,5 +23,9 @@ files {
 	'html/styles/*.css',
 	'html/js/*.js',
 	'html/assets/*.*',
+}
+
+escrow_ignore {
+	'**/**'
 }
 

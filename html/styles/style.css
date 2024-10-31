@@ -39,13 +39,9 @@
 }
 .fire {
     position: absolute;
-    width: 80px;
-    height: 80px;
+    width: 95px;
+    height: 95px;
     pointer-events: none; /* Prevent interactions */
-}
-/* Class to apply the shaking animation */
-.shaking {
-    animation: shake 0.2s infinite;
 }
 #timer-container {
     width: 80%;  /* Full width of the screen */

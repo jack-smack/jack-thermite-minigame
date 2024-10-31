@@ -6,16 +6,22 @@
     <title>Thermite Game</title>
     <script src="jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="styles/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 </head>
 <body>
-    <div id="frame" style="width:100%; display: flex; align-items: center; justify-content: center;">
+    <div id="frame" style="width:100%; display: none; align-items: center; justify-content: center;">
         
         <div style="display: flex; width:fit-content; margin-top: 10vh; padding:3vh; flex-direction: column; align-items: center; justify-content: center; border-radius:1vh; background-image: url('assets/shipwall22.jpg');">
             <div id="timer-container">
                 <div id="timer-line"></div>
             </div>
-            <div id="score" style="font-size: xx-large; margin-bottom: 10vh; color:white;">
-                Score: 0
+            <div style="display: flex; flex-direction: row; margin-bottom: 10vh;">
+                <div id="score" style="font-size: xx-large; color:white; margin-right: 1vh;">
+                    Score: 0 Last combo: 5
+                </div>
+                <div id="targetscore" style="font-size: xx-large; color:white; margin-left: 1vh;">
+                    Target: 1500
+                </div>
             </div>
             <div style="display: flex; align-items: center; justify-content: center; flex-direction: row;">
                 <div class="gameGrid" id="gameGrid"></div>
