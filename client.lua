@@ -17,6 +17,7 @@ RegisterNuiCallback('finishgame', function(data)
     local score = tonumber(data.score)
     if callback then
         callback(score>=tonumber(scoreTarget))
+        callback=nil
     end
-
+    scoreTarget=1000
 end)

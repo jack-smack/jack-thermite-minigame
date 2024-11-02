@@ -24,7 +24,6 @@ const gameGridData = [
 
 let gameStarted = false;
 
-let DEBUGShowNumbers = false;
 
 //Swapping
 let draggedTile = null;
@@ -36,8 +35,34 @@ let timeLeft = 60;
 let score = 0;
 let matchCombo = 1;
 
+let startTile = null;
+let dragStartPos = {x:0, y:0};
+let TryingSwap = false;
 
-generateRandomGrid();
+function Init(){
+    generateRandomGrid();
+    setupFireLayer();
+    gameStarted = false;
+    //Swapping
+    draggedTile = null;
+    draggedPosition = null;
+    swapping=false;
+
+    //Score and time
+    timeLeft = 60;
+    score = 0;
+    matchCombo = 1;
+
+    startTile = null;
+    dragStartPos = {x:0, y:0};
+    TryingSwap = false;
+
+    setInterval(timer, 1000);
+
+    window.requestAnimationFrame(gameLoop);
+}
+
+
 function generateRandomGrid(){
     for(let i = 0; i<5; i++){
         for(let j=0; j<7;j++){
@@ -51,7 +76,7 @@ function generateRandomGrid(){
 //4 Mg
 //5 Ti
 
-setInterval(timer, 1000);
+
 function timer(){
     if(!gameStarted){return;}
     timeLeft-=1;
@@ -102,7 +127,7 @@ function AnyMatches(){
     }
     return false;
 }
-window.requestAnimationFrame(gameLoop);
+
 function gameLoop(){
     if(!gameStarted){ window.requestAnimationFrame(gameLoop); return;}
     //tiles still falling do not execute any logic (until animations are done)
@@ -373,8 +398,7 @@ function createTile(row, col){
         img.src="assets/Dust.png"
     }
     img.draggable=false;
-    if(!DEBUGShowNumbers){tile.appendChild(img);}
-    if(DEBUGShowNumbers){tile.textContent=`(${row},${col})=${type}`;}
+    tile.appendChild(img);
 
     tile.dataset.row=row;
     tile.dataset.col=col;
@@ -382,8 +406,6 @@ function createTile(row, col){
 
     return tile;
 }
-let startTile = null;
-let dragStartPos = {x:0, y:0};
 function findNearestTile(mouseX, mouseY) {
     let closestTile = null;
     let minDistance = 51;
@@ -406,7 +428,6 @@ function isNeighbour(pos1, pos2){
     const colDiff = Math.abs(pos1.col - pos2.col);
     return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
 }
-let TryingSwap = false;
 function TrySwap(startPosition, endPosition){
     if(!TryingSwap){
         if(gameGridData[startPosition.row] && gameGridData[endPosition.row]){
@@ -457,20 +478,6 @@ function TrySwap(startPosition, endPosition){
     }
 }
 
-document.body.onkeyup = function(e) {
-    if (e.key == " " ||
-        e.code == "Space" ||      
-        e.keyCode == 32      
-    ) {
-        DEBUGShowNumbers=!DEBUGShowNumbers;
-    }
-    if(e.key=="Escape"){
-        gameStarted=false;
-        timeLeft=60;
-        document.getElementById('frame').style.display='none';
-        $.post(`https://${GetParentResourceName()}/finishgame`, JSON.stringify({'score': score}));
-    }
-}
 gameGrid.addEventListener('mousemove', (event)=>{
     //if mouse is held down find the delta between positions. If past a certain point do swap to that loc
     if(swapping && startTile!=null){
@@ -529,8 +536,7 @@ gameGrid.addEventListener('mousedown', (event)=>{
 window.addEventListener('message', (event) => {
     if (event.data.type === 'startgame') {
         document.getElementById('frame').style.display='flex';
-        setupFireLayer();
-        timeLeft = 60;
+        Init();
         if(event.data.data){
             if(event.data.data.time){
                 timeLeft=event.data.data.time;
