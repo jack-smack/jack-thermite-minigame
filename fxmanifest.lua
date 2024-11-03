@@ -10,7 +10,7 @@ version '1.0.0'
 
 lua54 'yes'
 
-License 'GPL4.0'
+License 'MIT'
 
 client_scripts {
 	'client.lua'
