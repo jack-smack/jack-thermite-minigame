@@ -15,6 +15,9 @@ License 'MIT'
 client_scripts {
 	'client.lua'
 }
+server_scripts {
+	'server.lua'
+}
 
 ui_page 'html/index.html'
 

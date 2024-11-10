@@ -39,6 +39,8 @@ let startTile = null;
 let dragStartPos = {x:0, y:0};
 let TryingSwap = false;
 
+const interval = setInterval(timer, 1000);
+
 function Init(){
     generateRandomGrid();
     setupFireLayer();
@@ -57,7 +59,6 @@ function Init(){
     dragStartPos = {x:0, y:0};
     TryingSwap = false;
 
-    setInterval(timer, 1000);
 
     window.requestAnimationFrame(gameLoop);
 }
@@ -83,9 +84,9 @@ function timer(){
     let progress = timeLeft/60;
     timerLine.style.width=`${progress*100}%`;
     if(timeLeft<=0){
+        gameStarted=false;
+        timeLeft=60;
         setTimeout(()=>{
-            gameStarted=false;
-            timeLeft=60;
             document.getElementById('frame').style.display='none';
             $.post(`https://${GetParentResourceName()}/finishgame`, JSON.stringify({'score': score}));
         },1500)

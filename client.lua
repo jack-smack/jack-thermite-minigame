@@ -5,7 +5,6 @@ function StartGame(data, cb)
         callback = cb
         scoreTarget = data.scoreTarget
         local time = data.time
-        print("target: ", scoreTarget)
         SendNUIMessage({type="startgame", data={time=time, target=scoreTarget}})
         SetNuiFocus(true, true)
     end
